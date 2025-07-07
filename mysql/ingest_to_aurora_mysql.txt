@@ -8,4 +8,9 @@ docker exec -it mysql-db bash
 
 mysql --version
 
-mysql -h db-sales-classic-cars.cluster-cm9ou64wcqti.us-east-1.rds.amazonaws.com -u admin -p < /tmp/mysqlsampledatabase.sql
+mysql -h <your-aurora-mysql-db-endpoint> -u admin -p < /tmp/mysqlsampledatabase.sql
+
+rm /tmp/mysqlsampledatabase.sql
+
+atau kalau dari host:
+docker exec mysql-db rm /tmp/mysqlsampledatabase.sql

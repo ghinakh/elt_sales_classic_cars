@@ -1,0 +1,67 @@
+{
+    "customers" : [{
+        "rule": "null customernumber values",
+        "sql": "SELECT COUNT(*) FROM raw_zone.customers WHERE customernumber IS NULL"
+    }, {
+        "rule": "non unique customernumber values",
+        "sql": "SELECT COUNT(*) FROM (SELECT customernumber, COUNT(*) FROM raw_zone.customers GROUP BY customernumber HAVING COUNT(*) > 1) AS duplicates;"
+    }],
+    "products": [{
+        "rule": "null productcode values",
+        "sql": "SELECT COUNT(*) FROM raw_zone.products WHERE productcode IS NULL"
+    }, {
+        "rule": "non unique productcode values",
+        "sql": "SELECT COUNT(*) FROM (SELECT productcode, COUNT(*) FROM raw_zone.products GROUP BY productcode HAVING COUNT(*) > 1) AS duplicates;"
+    }, {
+        "rule": "negative value on quantity",
+        "sql": "SELECT COUNT(*) FROM raw_zone.products WHERE quantityinstock < 0;"
+    }, {
+        "rule": "zero or negative value on buyprice",
+        "sql": "SELECT COUNT(*) FROM raw_zone.products WHERE buyprice <= 0;"
+    }, {
+        "rule": "zero or negative value on msrp",
+        "sql": "SELECT COUNT(*) FROM raw_zone.products WHERE msrp <= 0;"
+    }],
+    "productlines": [{
+        "rule": "null productline values",
+        "sql": "SELECT COUNT(*) FROM raw_zone.productlines WHERE productline IS NULL"
+    }, {
+        "rule": "non unique productline values",
+        "sql": "SELECT COUNT(*) FROM (SELECT productline, COUNT(*) FROM raw_zone.productlines GROUP BY productline HAVING COUNT(*) > 1) AS duplicates;"
+    }], 
+    "orders": [{
+        "rule": "null ordernumber values",
+        "sql": "SELECT COUNT(*) FROM raw_zone.orders WHERE ordernumber IS NULL"
+    }, {
+        "rule": "non unique ordernumber values",
+        "sql": "SELECT COUNT(*) FROM (SELECT ordernumber, COUNT(*) FROM raw_zone.orders GROUP BY ordernumber HAVING COUNT(*) > 1) AS duplicates;"
+    }],
+    "orderdetails": [{
+        "rule": "null ordernumber + productcode values",
+        "sql": "SELECT COUNT(*) FROM raw_zone.orderdetails WHERE ordernumber IS NULL or productcode IS NULL"
+    }, {
+        "rule": "non unique ordernumber + productcode values",
+        "sql": "SELECT COUNT(*) FROM (SELECT ordernumber, productcode, COUNT(*) FROM raw_zone.orderdetails GROUP BY ordernumber, productcode HAVING COUNT(*) > 1) AS duplicates;"
+    }],
+    "dim_customers": [{
+        "rule": "null customernumber values",
+        "sql": "SELECT COUNT(*) FROM processed_zone.dim_customers WHERE customernumber IS NULL"
+    }, {
+        "rule": "non unique customernumber values",
+        "sql": "SELECT COUNT(*) FROM (SELECT customernumber, COUNT(*) FROM processed_zone.dim_customers GROUP BY customernumber HAVING COUNT(*) > 1) AS duplicates;"
+    }],
+    "dim_products": [{
+        "rule": "null productcode values",
+        "sql": "SELECT COUNT(*) FROM processed_zone.dim_products WHERE productcode IS NULL"
+    }, {
+        "rule": "non unique productcode values",
+        "sql": "SELECT COUNT(*) FROM (SELECT productcode, COUNT(*) FROM processed_zone.dim_products GROUP BY productcode HAVING COUNT(*) > 1) AS duplicates;"
+    }],
+    "fact_sales": [{
+        "rule": "null ordernumber + productcode + customernumber values",
+        "sql": "SELECT COUNT(*) FROM processed_zone.fact_sales WHERE ordernumber IS NULL OR productcode IS NULL OR customernumber IS NULL"
+    }, {
+        "rule": "non unique ordernumber + productcode values",
+        "sql": "SELECT orderNumber, productCode, COUNT(*) FROM processed_zone.fact_sales GROUP BY orderNumber, productCode HAVING COUNT(*) > 1;"
+    }]
+}

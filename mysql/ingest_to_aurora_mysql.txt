@@ -1,0 +1,16 @@
+docker ps -a
+
+docker start -ai mysql-db
+
+docker cp "D:\Dokumen Ghina\archives\Portofolio\sales_classic_cars\mysql\mysqlsampledatabase.sql" mysql-db:/tmp/mysqlsampledatabase.sql
+
+docker exec -it mysql-db bash
+
+mysql --version
+
+mysql -h <your-aurora-mysql-db-endpoint> -u admin -p < /tmp/mysqlsampledatabase.sql
+
+rm /tmp/mysqlsampledatabase.sql
+
+atau kalau dari host:
+docker exec mysql-db rm /tmp/mysqlsampledatabase.sql

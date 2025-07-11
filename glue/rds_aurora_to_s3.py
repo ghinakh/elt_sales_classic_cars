@@ -1,4 +1,4 @@
-# cutomers, products productlines, (orders, order_details, payment)
+# cutomers, products productlines, (orders, order_details)
 
 import boto3
 import sys
@@ -7,13 +7,20 @@ import pymysql
 import io
 import json
 import logging
-from datetime import date
+from datetime import date, datetime
 from botocore.exceptions import ClientError
 from awsglue.utils import getResolvedOptions
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+logger = logging.getLogger("glue-custom-logger")
+logger.setLevel(logging.INFO)
+
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("[%(levelname)s] %(message)s")
+handler.setFormatter(formatter)
+
+# Agar handler tidak ditambahkan berkali-kali
+if not logger.handlers:
+    logger.addHandler(handler)
 
 # Ambil parameter dari Glue job arguments
 args = getResolvedOptions(sys.argv, ["table_name", "load_type"])
@@ -45,7 +52,7 @@ DB_CONFIG = {
 }
 
 # Lokasi tujuan file CSV di S3
-S3_BUCKET = "ginn-aws-bde-bucket"
+S3_BUCKET = "your-s3-bucket"
 S3_KEY = f"raw_landing_zone/classicmodels_db/{table_name}/data.csv"
 
 # Inisialisasi DynamoDB dan table konfigurasi incremental load
@@ -92,14 +99,25 @@ def update_last_value(table_name, last_value):
     except Exception as e:
         logger.error(f"[ERROR] Failed to update last_extracted_value: {e}")
 
-# Konversi hasil query ke CSV
+def normalize_record(record):
+    return {
+        k: (
+            v.strftime("%Y-%m-%d") if isinstance(v, (date, datetime))
+            else v.replace('\n', ' ').replace('\r', ' ') if isinstance(v, str)
+            else v
+        )
+        for k, v in record.items()
+    }
+
 def convert_to_csv(data):
     if not data:
         return ""
     csv_buffer = io.StringIO()
-    writer = csv.DictWriter(csv_buffer, fieldnames=data[0].keys())
+    writer = csv.DictWriter(csv_buffer, fieldnames=data[0].keys(), quoting=csv.QUOTE_ALL)
     writer.writeheader()
-    writer.writerows(data)
+    for row in data:
+        # print(f"Row: {row}")
+        writer.writerow(normalize_record(row))
     return csv_buffer.getvalue()
 
 # Fungsi utama Glue Job
@@ -118,6 +136,7 @@ def main():
         with conn.cursor() as cursor:
             # Buat query sesuai tipe load
             sql = build_query(table_name, load_type, incr_column, last_value)
+            logger.info(f"[DEBUG] SQL: {sql}")
             cursor.execute(sql)
             records = cursor.fetchall()
 

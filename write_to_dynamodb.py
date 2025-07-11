@@ -10,7 +10,7 @@ def upload_data_to_dynamodb():
     # Define the data to upload
     data = [
         {"table_name": "orders", "load_column": "orderDate", "last_extracted_value": None},
-        {"table_name": "orderdetails", "load_column": None, "last_extracted_value": None},  # ikut orders
+        {"table_name": "orderdetails", "load_column": 'orderDate', "last_extracted_value": None},  # ikut orders
         {"table_name": "payments", "load_column": "paymentDate", "last_extracted_value": None},
         {"table_name": "customers", "load_column": None, "last_extracted_value": None},
         {"table_name": "products", "load_column": None, "last_extracted_value": None},

@@ -1,0 +1,170 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "raw_ingestion",
+  "States": {
+    "raw_ingestion": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "rds_to_s3_customers",
+          "States": {
+            "rds_to_s3_customers": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "rds_aurora_to_s3",
+                "Arguments": {
+                  "--table_name": "customers",
+                  "--load_type": "full_load"
+                }
+              },
+              "Next": "rds_to_s3_orders"
+            },
+            "rds_to_s3_orders": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "rds_aurora_to_s3",
+                "Arguments": {
+                  "--table_name": "orders",
+                  "--load_type": "incremental"
+                }
+              },
+              "Next": "rds_to_s3_orderdetails"
+            },
+            "rds_to_s3_orderdetails": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "rds_aurora_to_s3",
+                "Arguments": {
+                  "--table_name": "orderdetails",
+                  "--load_type": "incremental"
+                }
+              },
+              "Next": "s3_to_redshift_customers"
+            },
+            "s3_to_redshift_customers": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "ingest_from_s3_to_redshift",
+                "Arguments": {
+                  "--table_name": "customers"
+                }
+              },
+              "Next": "s3_to_redshift_orders"
+            },
+            "s3_to_redshift_orders": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "ingest_from_s3_to_redshift",
+                "Arguments": {
+                  "--table_name": "orders"
+                }
+              },
+              "Next": "s3_to_redshift_orderdetails"
+            },
+            "s3_to_redshift_orderdetails": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "ingest_from_s3_to_redshift",
+                "Arguments": {
+                  "--table_name": "orderdetails"
+                }
+              },
+              "Next": "process_dim_customers"
+            },
+            "process_dim_customers": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "process_job",
+                "Arguments": {
+                  "--table_name": "customers"
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "rds_to_s3_products",
+          "States": {
+            "rds_to_s3_products": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "rds_aurora_to_s3",
+                "Arguments": {
+                  "--table_name": "products",
+                  "--load_type": "full_load"
+                }
+              },
+              "Next": "rds_to_s3_productlines"
+            },
+            "rds_to_s3_productlines": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "rds_aurora_to_s3",
+                "Arguments": {
+                  "--table_name": "productlines",
+                  "--load_type": "full_load"
+                }
+              },
+              "Next": "s3_to_redshift_products"
+            },
+            "s3_to_redshift_products": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "ingest_from_s3_to_redshift",
+                "Arguments": {
+                  "--table_name": "products"
+                }
+              },
+              "Next": "s3_to_redshift_productlines"
+            },
+            "s3_to_redshift_productlines": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "ingest_from_s3_to_redshift",
+                "Arguments": {
+                  "--table_name": "productlines"
+                }
+              },
+              "Next": "process_dim_products"
+            },
+            "process_dim_products": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "process_job",
+                "Arguments": {
+                  "--table_name": "products"
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "process_fact_sales"
+    },
+    "process_fact_sales": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "process_job",
+        "Arguments": {
+          "--table_name": "orders"
+        }
+      },
+      "End": true
+    }
+  }
+}
